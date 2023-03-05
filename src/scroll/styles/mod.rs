@@ -1,5 +1,5 @@
-pub mod scroll_root;
-pub use super::styles::scroll_root::*;
+pub mod scroll_wrapper;
+pub use super::styles::scroll_wrapper::*;
 
 pub mod scroll_bar;
 pub use super::styles::scroll_bar::*;
