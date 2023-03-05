@@ -1,58 +1,71 @@
 pub mod components;
+pub mod scroll_bar;
+pub mod scroll_content;
+pub mod scroll_indicator;
+pub mod scroll_container;
 pub mod styles;
-pub mod systems;
-pub mod bundles;
 
-use systems::*;
+use scroll_bar::*;
+use scroll_content::*;
+use scroll_indicator::*;
+use scroll_container::*;
 
 #[derive(Hash, Debug, Eq, PartialEq, Clone, Copy, SystemSet)]
 pub enum ScrollSystemSet {
+    Create,
     Interact,
+    Update,
     Constrain,
-    Bind,
+    Propagate,
     Extract,
 }
 
-use bevy::prelude::*;
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PropagateSchedule;
+
+use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 
 pub struct UiScrollPlugin;
 
 impl Plugin for UiScrollPlugin {
     fn build(&self, app: &mut App) {
+        use ScrollSystemSet::*;
+
         app
-            .add_system(handle_mousewheel.in_set(ScrollSystemSet::Interact))
-            .add_system(scroll_bar_interaction.in_set(ScrollSystemSet::Interact))
-            .add_system(handle_middle_click.in_set(ScrollSystemSet::Interact))
-            .add_system(scroll_from_scroll_indicator.in_set(ScrollSystemSet::Interact))
-            .add_system(
-                scroll_content_that_controls_scroll_handles
-                    .in_set(ScrollSystemSet::Bind)
-                    .after(ScrollSystemSet::Interact),
-            )
-            .add_system(
-                scroll_handles_that_control_scroll_content
-                    .in_set(ScrollSystemSet::Bind)
-                    .after(ScrollSystemSet::Interact),
-            )
-            .add_system(
-                constrain_scroll_handles
-                    .in_set(ScrollSystemSet::Constrain)
-                    .after(ScrollSystemSet::Bind),
-            )
-            .add_system(
-                constrain_scroll_content
-                    .in_set(ScrollSystemSet::Constrain)
-                    .after(ScrollSystemSet::Bind),
-            )
-            .add_system(
-                extract_scroll_handle_styles
-                    .in_set(ScrollSystemSet::Extract)
-                    .after(ScrollSystemSet::Constrain),
-            )
-            .add_system(
-                extract_scroll_content_styles
-                    .in_set(ScrollSystemSet::Extract)
-                    .after(ScrollSystemSet::Constrain),
-            );
+            .add_schedule(PropagateSchedule, Schedule::new())
+            .configure_sets((
+                Create,
+                Interact,
+                Update,
+                Constrain,
+                Propagate,
+                Extract
+            ).chain())
+            // .add_system(
+            //     run_ui_propagate_schedule.in_set(Propagate)
+            // )
+            .add_plugin(ScrollBarPlugin)
+            .add_plugin(ScrollContentPlugin)
+            .add_plugin(ScrollIndicatorPlugin)
+            .add_plugin(ScrollContainerPlugin);
     }
+}
+
+pub fn run_ui_propagate_schedule(world: &mut World) {
+    // let mut schedules = world.resource_mut::<Schedules>();
+
+    // let propagate_schedule = schedules
+    //     .get(&PropagateSchedule)
+    //     .unwrap_or_else(|| panic!(""));
+
+    // for system in propagate_schedule.graph().systems() {
+    //     system.1.get_last_change_tick();
+    // }
+
+    // let before_schedule_tick = world.change_tick();
+    //    world.run_schedule(PropagateSchedule);
+    // let after_schedule_tick = world.change_tick();
+    // for entity in world.iter_entities() {
+    //     //entity.get_change_ticks::<ScrollBarWidget>().unwrap().is_changed(before_schedule_tick, after_schedule_tick);
+    // }
 }

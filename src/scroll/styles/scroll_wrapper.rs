@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::scroll::components::*;
 
-pub fn scroll_root_style(scroll_direction: ScrollDirection) -> Style {
+pub fn scroll_wrapper_style(scroll_direction: ScrollDirection) -> Style {
     return Style {
         min_size:          Size {
             width: Val::Percent(30.0),
